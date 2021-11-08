@@ -165,7 +165,7 @@ class Optimizer:
             def loss(params):
                 weights, filters = _split_params(params, shape)
                 pred = self.model(X, weights, filters)
-                error = _mse(y[:pred.shape[0]], pred)
+                error = _mse(y[:pred.shape[0]], pred) # Slicing?
                 return error.dot(aggregate[:pred.shape[0]]) + pen(params)
 
         else:

@@ -1,6 +1,6 @@
 ### Filtering Generalized Additive Model
 
-$ \text{Pr}(y_i=1 | y) = \sigma\left( s_m(y)_i F^T \beta + \alpha \right) ≈$  
+$` \text{Pr}(y_i=1 | y) = \sigma\left( s_m(y)_i F^T \beta + \alpha \right) `$  
 _where_: <br>
 &ensp; $y$ is a 1-dimmensional signal  
 &ensp; $\sigma$ is the sigmoid function  

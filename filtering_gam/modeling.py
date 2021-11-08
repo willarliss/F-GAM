@@ -12,9 +12,7 @@ Filters = Union[ Tuple[int,int], ndarray ]
 
 def _smooth_abs(v: ArrayOrFloat, gamma: float = 1e-4) -> ArrayOrFloat:
     """Apply a smooth absolute value function"""
-    return np.sqrt(
-        gamma + v**2
-    )
+    return np.sqrt(gamma + v**2)
 
 def _segment(X: ndarray, length: int) -> ndarray:
     """Create array of subsequences of given length and stride one"""
@@ -26,16 +24,15 @@ def _segment(X: ndarray, length: int) -> ndarray:
 
 def _sigmoid(s: ArrayOrFloat, alpha: float = 1., beta: float = 0.) -> ArrayOrFloat:
     """Apply the sigmoid function"""
-    return 1 / (
-        1 + np.exp((beta-s)/alpha)
-    )
+    return 1 / ( 1 + np.exp((beta-s)/alpha) )
 
-def _batch_norm(batch: ndarray, epsilon: float = 1e-4) -> ndarray:
+def _batch_norm(batch: ndarray, axis: int = 0, epsilon: float = 1e-4) -> ndarray:
     """Perform batch normalization"""
-    return (
-        (batch-batch.mean())
-        / np.sqrt(batch.var()+epsilon)
-    )
+    if axis == 1:
+        return (batch-batch.mean(1).reshape(-1,1)) / np.sqrt(batch.var().reshape(-1,1)+epsilon)
+    if axis == 0:
+        return (batch-batch.mean(0)) / np.sqrt(batch.var()+epsilon)
+    raise ValueError(f'axis must be 0 or 1 for batch norm. Not {axis}.')
 
 
 def regress(signal: ndarray, weights: ndarray, filters: ndarray,
@@ -70,12 +67,12 @@ def regress(signal: ndarray, weights: ndarray, filters: ndarray,
     # Concatenate bias column
     matrix = np.c_[np.ones(matrix.shape[0]), matrix]
 
-    # Apply weights
-    matrix = matrix.dot(weights)
-
     # Batch normalize
     if bn:
-        matrix = _batch_norm(matrix)
+        matrix = _batch_norm(matrix, axis=1)
+
+    # Apply weights
+    matrix = matrix.dot(weights)
 
     # Calculate probability
     if pr:
