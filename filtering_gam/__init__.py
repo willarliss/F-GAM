@@ -1,4 +1,4 @@
-"""Initialization"""
+"""Initialization for Filtering Generalized Additive Model"""
 
-from .modeling import Model, regress
-from .training import Optimizer
+from .modeling import Optimizer, Model
+from .filters import Filters

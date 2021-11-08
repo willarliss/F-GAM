@@ -4,7 +4,7 @@ from typing import List, Callable, Tuple
 from numpy import ndarray
 import numpy as np
 
-from .modeling import Model
+from .model import Model
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-instance-attributes,
 # pylint: disable=too-many-locals,inconsistent-return-statements
