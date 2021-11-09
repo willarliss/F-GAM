@@ -34,15 +34,24 @@ def _batch_norm(batch: ndarray, axis: int = 0, epsilon: float = 1e-4) -> ndarray
         return (batch-batch.mean(0)) / np.sqrt(batch.var()+epsilon)
     raise ValueError(f'axis must be 0 or 1 for batch norm. Not {axis}.')
 
+def _pad_signal(X: ndarray, length: int, mode: str = 'reflect') -> ndarray:
+    """Pad the ends of a signal"""
+    return np.pad(
+        array=X.squeeze(),
+        pad_width=(int(np.floor(length/2)), int(np.ceil(length/2))-1),
+        mode=mode,
+    )
+
 
 def regress(signal: ndarray, weights: ndarray, filters: ndarray,
-            av: bool = True, pr: bool = True, bn: bool = False) -> ndarray:
+            pad: str = None, av: bool = True, pr: bool = True, bn: bool = False) -> ndarray:
     """Perform regression of filtering generalized additive model.
 
     Args:
         signal: [array] Signal array to predict on.
         weights: [array] 1D vector of weight terms. Shape = (n_filters+1, )
         filters: [array] 2D matrix of filters. Shape = (n_filters, filter_len).
+        pad: [str] How to pad the signal input to ensure output length equals input length.
         av: [bool] Whether to apply the smooth absolute value function after filtering.
         pr: [bool] Whether to apply sigmoid function before returning outputs.
         bn: [bool] Whether to apply batch normalization after aggregating.
@@ -53,6 +62,10 @@ def regress(signal: ndarray, weights: ndarray, filters: ndarray,
     Raises:
         None.
     """
+
+    # Pad input
+    if pad:
+        signal = _pad_signal(signal, filters.shape[1], pad)
 
     # Segment input signal
     matrix = _segment(signal, filters.shape[1])
@@ -72,13 +85,13 @@ def regress(signal: ndarray, weights: ndarray, filters: ndarray,
         matrix = _batch_norm(matrix, axis=1)
 
     # Apply weights
-    matrix = matrix.dot(weights)
+    prediction = matrix.dot(weights)
 
     # Calculate probability
     if pr:
-        matrix = _sigmoid(matrix)
+        prediction = _sigmoid(prediction)
 
-    return matrix
+    return prediction
 
 
 class Model:
@@ -86,9 +99,10 @@ class Model:
 
     Args:
         filters: [array|tuple] 2D matrix of filters where shape = (n_filters, filter_len). Or
-                 tuple of (n_filters, filter_len) for specifying shape of random initialization.
+            tuple of (n_filters, filter_len) for specifying shape of random initialization.
         weights: [ndarray] 1D vector of weight terms where shape = (n_filters+1, ). Default to -1
-                 to match shape of filters matrix for random initialization.
+            to match shape of filters matrix for random initialization.
+        pad: [str] How to pad the signal input to ensure output length equals input length.
         av: [bool] Whether to apply the smooth absolute value function after filtering.
         pr: [bool] Whether to apply sigmoid function before returning outputs.
         bn: [bool] Whether to apply batch normalization after aggregating.
@@ -101,6 +115,7 @@ class Model:
     def __init__(self, *,
         filters: Filters = (5,5),
         weights: ndarray = -1,
+        pad: str = None,
         av: bool = True,
         pr: bool = True,
         bn: bool = False,
@@ -111,6 +126,7 @@ class Model:
         self.filters = filters
         self.weights = weights
 
+        self.pad = pad
         self.av = av
         self.pr = pr
         self.bn = bn
@@ -203,6 +219,7 @@ class Model:
             signal=signal,
             weights=weights,
             filters=filters,
+            pad=self.pad,
             av=self.av,
             pr=self.pr,
             bn=self.bn,

@@ -32,6 +32,11 @@ def _split_params(array: ndarray, shape: int) -> WeightsFilters:
         array[shape:].reshape(shape-1,-1), # Filters
     )
 
+def _slicing(diff: int) -> Tuple[int,int]:
+    """Array slicing for matching target array size to prediction array size"""
+    offset = diff//2
+    return offset, (None if offset==0 else -offset)
+
 def _finite_difference(func: Callable, params: ndarray, eps: float = 1.1e-16) -> ndarray:
     """Calculate centeral finite difference to return gradient"""
 
@@ -156,17 +161,18 @@ class Optimizer:
             def loss(params):
                 weights, filters = _split_params(params, shape)
                 pred = self.model(X, weights, filters)
-                offset = (y.shape[0]-pred.shape[0])//2
-                entropy = _cross_entropy(y[offset:-offset], pred)
-                return entropy.dot(aggregate[offset:-offset]) + pen(params)
+                off0, off1 = _slicing(y.shape[0]-pred.shape[0])
+                entropy = _cross_entropy(y[off0:off1], pred)
+                return entropy.dot(aggregate[off0:off1]) + pen(params)
 
         elif self.loss == 'mse':
 
             def loss(params):
                 weights, filters = _split_params(params, shape)
                 pred = self.model(X, weights, filters)
-                error = _mse(y[:pred.shape[0]], pred) # Slicing?
-                return error.dot(aggregate[:pred.shape[0]]) + pen(params)
+                offset = pred.shape[0] # Slicing?
+                error = _mse(y[:offset], pred)
+                return error.dot(aggregate[:offset]) + pen(params)
 
         else:
             raise ValueError(f'Unknown loss function: {self.loss}')
