@@ -230,7 +230,7 @@ class Optimizer:
         eta = float(self.eta0)
 
         step = 0
-        for _ in range(self.epochs):
+        for epoch in range(self.epochs):
 
             diff = []
             for X_i, y_i in zip(X, y):
